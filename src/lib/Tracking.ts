@@ -1,6 +1,6 @@
 import { getAccessToken } from './AuthService';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 const ANON_ID_KEY = 'lifeline_anon_id';
 const SESSION_ID_KEY = 'lifeline_session_id';
