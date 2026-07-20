@@ -79,36 +79,28 @@ export async function analyze(request: AnalyzeRequest): Promise<AnalyzeResponse>
   });
 }
 
-/** 获取站点安全Token（有效5分钟） */
-async function getSiteToken(): Promise<string> {
-  const response = await fetch(`${API_BASE_URL}/api/site-token`);
-  if (!response.ok) {
-    throw new Error('获取安全令牌失败');
-  }
-  const data = await response.json();
-  return data.token;
-}
-
-/** 免登录的公开AI分析接口（带安全防护） */
+/** 免登录的公开AI分析接口 */
 export async function analyzePublic(request: AnalyzeRequest): Promise<AnalyzeResponse> {
-  // 先获取安全Token
-  const siteToken = await getSiteToken();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 200000); // 200秒超时
 
-  const response = await fetch(`${API_BASE_URL}/api/analyze-public`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Site-Token': siteToken,
-    },
-    body: JSON.stringify(request),
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/analyze-public`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+      signal: controller.signal,
+    });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: response.statusText }));
-    throw new Error(error.error || '请求失败');
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+      throw new Error(error.error || '请求失败');
+    }
+
+    return response.json();
+  } finally {
+    clearTimeout(timeout);
   }
-
-  return response.json();
 }
 
 export async function getUsageLogs(limit: number = 50): Promise<UsageLogResponse> {

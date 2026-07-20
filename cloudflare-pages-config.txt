@@ -1,29 +1,18 @@
 # Cloudflare Pages 部署配置
 
-# ============ 构建设置 ============
-# Build command: npm run build
-# Build output directory: dist
-# Root directory: /
+# ============ 构建命令 ============
+# npm run build
+
+# ============ 输出目录 ============
+# dist
 
 # ============ 环境变量（在 Cloudflare Pages Dashboard 设置） ============
 # 必填：
-#   DEEPSEEK_API_KEY=sk-你的DeepSeek密钥
-#   SITE_SECRET=你的随机安全字符串（自己设一个复杂的）
+#   DEEPSEEK_API_KEY=你的DeepSeek密钥
 #
-# 可选（使用 Supabase 登录时需要）：
-#   VITE_SUPABASE_URL=https://你的项目.supabase.co
-#   VITE_SUPABASE_ANON_KEY=你的anon_key
-#   VITE_API_URL=（留空，使用同域名 Pages Functions）
+# 可选：
+#   VITE_SUPABASE_URL=...
+#   VITE_SUPABASE_ANON_KEY=...
 
-# ============ Pages Functions ============
-# API 端点由 /functions 目录下的 Pages Functions 自动处理：
-#   /api/analyze-public  → functions/api/analyze-public.ts
-#   /api/site-token      → functions/api/site-token.ts
-# 无需额外配置，Cloudflare 自动部署。
-
-# ============ 架构 ============
-# 浏览器 → Cloudflare Pages（前端 + Functions）
-#                ↓
-#           /api/analyze-public（Pages Function）
-#                ↓
-#           DeepSeek API（密钥仅在服务端，绝不泄露）
+# ============ API 端点（自动由 /functions 目录提供） ============
+# POST /api/analyze-public → functions/api/analyze-public.ts

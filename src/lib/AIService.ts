@@ -1,5 +1,6 @@
 /**
- * 统一的 AI 调用接口（强制走后端）
+ * 统一的 AI 调用接口
+ * 直接走公开接口，无需登录
  */
 
 interface AIResponse {
@@ -13,7 +14,7 @@ interface AIResponse {
   savedToHistory?: boolean;
 }
 
-import { analyze, analyzePublic } from './ApiService';
+import { analyzePublic } from './ApiService';
 
 export async function callAIService(params: {
   systemPrompt: string;
@@ -33,19 +34,17 @@ export async function callAIService(params: {
 }): Promise<AIResponse> {
   const { systemPrompt, userPrompt, callType, model, metadata, requestId, analysisLog } = params;
 
-  const requestBody = {
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ],
-    callType: callType || 'chat',
-    metadata: { source: 'frontend', model, requestId, ...(metadata || {}) },
-    analysisLog
-  };
-
-  // 优先尝试登录接口，失败则回退到公开接口
   try {
-    const data = await analyze(requestBody);
+    const data = await analyzePublic({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      callType: callType || 'chat',
+      metadata: { source: 'frontend', model, requestId, ...(metadata || {}) },
+      analysisLog
+    });
+
     return {
       success: true,
       analysis: data.message,
@@ -55,27 +54,12 @@ export async function callAIService(params: {
       analysisId: data.analysisId,
       savedToHistory: data.savedToHistory
     };
-  } catch (authError: any) {
-    // 登录接口失败，尝试免登录公开接口
-    console.log('登录接口不可用，使用公开接口:', authError.message);
-    try {
-      const data = await analyzePublic(requestBody);
-      return {
-        success: true,
-        analysis: data.message,
-        remainingCalls: data.remainingCalls,
-        duplicate: data.duplicate,
-        requestId,
-        analysisId: data.analysisId,
-        savedToHistory: data.savedToHistory
-      };
-    } catch (publicError: any) {
-      console.error('公开接口也失败:', publicError);
-      return {
-        success: false,
-        error: publicError.message || '无法连接后端服务',
-        requestId
-      };
-    }
+  } catch (error: any) {
+    console.error('AI分析失败:', error);
+    return {
+      success: false,
+      error: error.message || '无法连接AI服务，请确认已配置 DEEPSEEK_API_KEY 环境变量',
+      requestId
+    };
   }
 }
